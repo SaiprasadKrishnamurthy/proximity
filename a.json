@@ -1,0 +1,60 @@
+{
+  "userIdHash": "indira",
+  "proximityEvents": [
+    {
+      "userIdHash": "indira",
+      "geoLocation": "41.12,-71.34",
+      "canonicalLocationName": "Costa,RPA,Aldershot"
+    },
+    {
+      "userIdHash": "saikris",
+      "geoLocation": "41.12,-71.34",
+      "canonicalLocationName": "Costa,RPA,Aldershot"
+    }
+  ]
+}
+
+N: 100
+L: latlong
+
+{
+        For every minute: {
+          noOfPersons = get random count with upper bounds as 100.
+          for(0 to noOfPersons) {
+          currPerson = arr[0]
+for(i to noofPErsons) {
+}
+sendToAPI(jsonForAPersonForAMinute)
+}
+        For this minute: HH:mm, Count is supposed to be: noOfPersons
+      }
+}
+P1, P2, P3 (no of persons)
+L1 (latlong, (derived = canonical name)
+Forward: yes.
+
+        P1 (1 minute): {
+          P2,P3
+        }
+          P2 (1 minute): {
+            P1,P3
+           }
+           P3 (1 minute): {
+            P1,P2
+           }
+
+
+
+
+E --> Redis --> Exact Hotspots
+---> ES ---> In/Around Hotspots
+---> Date Histogram ---> GraphDB --> Graph Queries.
+
+
+
+//   1. Hotspots - Near Realtime Count of people in a specific location at a specific time.
+
+//   2. Time overlaps - SAI,INDIRA,LOC(Heathrow Airport, Within 200m) = Time overlaps,
+
+
+

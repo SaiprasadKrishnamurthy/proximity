@@ -1,0 +1,1 @@
+docker run -e INFLUXDB_HTTP_AUTH_ENABLED=false -e INFLUXDB_ADMIN_USER=admin  -e INFLUXDB_ADMIN_PASSWORD=admin -e INFLUXDB_USER=sai -e INFLUXDB_USER_PASSWORD=sai  -p 8086:8086 -v influxdb:/var/lib/influxdb  -v `pwd`/influxdb.conf:/etc/influxdb/influxdb.conf influxdb

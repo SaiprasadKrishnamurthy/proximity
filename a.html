@@ -1,0 +1,93 @@
+<html>
+<head>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+</head>
+
+
+<body>
+<div id="container"></div>
+</body>
+<script type="text/javascript">
+      Highcharts.chart('container', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Speed Patterns'
+    },
+    subtitle: {
+        text: 'For user %user%'
+    },
+    xAxis: {
+        title: {
+            enabled: true,
+            text: 'Date Time'
+        },
+        startOnTick: true,
+        endOnTick: true,
+        showLastLabel: true
+    },
+    yAxis: {
+        title: {
+            text: 'Speed (km/h)'
+        }
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        x: 100,
+        y: 70,
+        floating: true,
+        backgroundColor: Highcharts.defaultOptions.chart.backgroundColor,
+        borderWidth: 1
+    },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 3,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)'
+                    }
+                }
+            },
+            states: {
+                hover: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            },
+            tooltip: {
+                headerFormat: '<b>{series.name}</b><br>',
+                pointFormat: '{point.x} cm, {point.y} kg'
+            }
+        }
+    },
+    series: [{
+        name: 'Safe Speeds',
+        color: 'green',
+        data: [%safe%]
+
+    }, {
+        name: 'High Speeds',
+        color: 'orange',
+        data: [%high%]
+    },
+    {
+        name: 'Dangerous Speeds',
+        color: 'red',
+        data: [%danger%]
+    }
+    ]
+});
+</script>
+</html>
+

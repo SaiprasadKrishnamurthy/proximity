@@ -1,0 +1,102 @@
+#!/c/softwares/jdk-11/bin/java --source 11
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+public class ProximityEventGenerator {
+    public static void main(String[] args) {
+        String userEvent = "{\n" +
+                "  \"userIdHash\": \"%s\",\n" +
+                "  \"proximityEvents\": [\n" +
+                "    %s\n" +
+                "  ]\n" +
+                "}";
+        String proximityEvent = "{\n" +
+                "      \"userIdHash\": \"%s\",\n" +
+                "      \"geoLocation\": \"%s\",\n" +
+                "      \"canonicalLocationName\": \"%s\",\n" +
+                "      \"timestamp\": %s,\n" +
+                "      \"tags\": %s\n" +
+                "    }";
+        int limit = Integer.parseInt(args[0]);
+        String point = args[1];
+        String canonicalName = point;
+        ScheduledExecutorService eventLoop = Executors.newScheduledThreadPool(1);
+        eventLoop.scheduleWithFixedDelay(() -> {
+            int users = getRandomNumber(limit);
+            String riskTag = (System.currentTimeMillis() % 5 == 0)?"MediumRisk":"LowRisk";
+            String primaryUserHash = UUID.randomUUID().toString();
+            String proximityEvents = String.format(proximityEvent, primaryUserHash, point, canonicalName, System.currentTimeMillis(), "["+riskTag+"]");
+            List<String> proximityUsers = new ArrayList<>();
+            for (int i = 0; i < users; i++) {
+                String proximityUserHash = UUID.randomUUID().toString();
+                proximityUsers.add(proximityUserHash);
+                String proximityUserEvent = String.format(proximityEvent, proximityUserHash, point, canonicalName, System.currentTimeMillis(), "["+riskTag+"]");
+                proximityEvents = String.join(",", proximityEvents, proximityUserEvent);
+            }
+            callIngestApi(String.format(userEvent, primaryUserHash, proximityEvents));
+//            writeToFile(userEvent, primaryUserHash, proximityEvents);
+            ingestProximityUsers(userEvent, proximityEvent, point, canonicalName, primaryUserHash, proximityUsers);
+            LocalDateTime now = LocalDateTime.now();
+            System.out.println("For this minute: " + now.getHour() + ":" + now.getMinute() + ", Count is supposed to be:" + (users + 1));
+        }, 0, 1, TimeUnit.MINUTES);
+    }
+
+    private static void callIngestApi(String payload) {
+        String postEndpoint = "http://localhost:8082/api/v1/ingest";
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(postEndpoint))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeToFile(String userEvent, String primaryUserHash, String proximityEvents) {
+        try (FileWriter fileWriter = new FileWriter(primaryUserHash + System.currentTimeMillis() + ".json")) {
+            fileWriter.write(String.format(userEvent, primaryUserHash, proximityEvents));
+            fileWriter.flush();
+        } catch (IOException e) {
+        }
+    }
+
+    private static void ingestProximityUsers(String userEvent, String proximityEvent, String point, String canonicalName, String primaryUserHash, List<String> proximityUsers) {
+        proximityUsers.parallelStream().forEach(proximityUser -> {
+            List<String> copy = new ArrayList<>();
+            copy.addAll(proximityUsers);
+            copy.remove(proximityUser);
+            String primary = String.format(proximityEvent, proximityUser, point, canonicalName, System.currentTimeMillis());
+            primary = String.join(",", primary, String.format(proximityEvent, primaryUserHash, point, canonicalName, System.currentTimeMillis()));
+            String otherUser = copy.stream().map(user -> String.format(proximityEvent, user, point, canonicalName, System.currentTimeMillis())).collect(Collectors.joining(","));
+            primary = String.join(",", primary, otherUser);
+            callIngestApi(String.format(userEvent, proximityUser, primary));
+//            writeToFile(userEvent, proximityUser, primary);
+        });
+    }
+
+    private static int getRandomNumber(int limit) {
+        Random rand = new Random();
+        return rand.nextInt(limit) + 1;
+    }
+}
+

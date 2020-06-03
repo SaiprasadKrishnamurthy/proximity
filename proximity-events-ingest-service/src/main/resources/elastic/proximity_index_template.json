@@ -1,0 +1,40 @@
+PUT _template/proximity_events_index_template
+{
+  "index_patterns": [
+    "*proximity_events*"
+  ],
+  "settings": {
+    "number_of_shards": 5
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "userIdHash": {
+          "type": "keyword"
+        },
+        "geoLocation": {
+          "type": "geo_point"
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "epoch_millis"
+        },
+        "channel": {
+          "type": "keyword"
+        },
+        "canonicalLocationName": {
+          "type": "keyword"
+        },
+        "tags": {
+          "type": "keyword"
+        },
+        "proximityType": {
+          "type": "keyword"
+        },
+        "count": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}

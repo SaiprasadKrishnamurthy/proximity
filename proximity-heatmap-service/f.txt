@@ -1,0 +1,6 @@
+P: 1 ...... 60
+S:      1.......60
+K:
+
+
+./ProximityEventGenerator 10 12.14,40.50

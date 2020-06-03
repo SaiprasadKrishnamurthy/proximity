@@ -1,0 +1,1 @@
+docker run --rm  -e REDIS_HOST=redis-14240.c226.eu-west-1-3.ec2.cloud.redislabs.com -e REDIS_PORT=14240 -e REDIS_PASSWORD=R5UJ5rJVc6x9srSfb8RUvmpOEpm3riGW -p 8081:8081 rediscommander/redis-commander:latest
