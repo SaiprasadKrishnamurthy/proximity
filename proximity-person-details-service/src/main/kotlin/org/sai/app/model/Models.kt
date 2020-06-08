@@ -12,9 +12,9 @@ data class PersonDetails(var id: String?,val firstName: String?,val lastName: St
         fun findAll(): Mono<List<PersonDetails>>
     }
 
-
+    data class SelfAssessmentAnswer(val questionId:String,val answer:String)
     data class SelfAssessmentQuestion(var id: String?,val question: String,val options: List<String>,val mandatory: Boolean=true)
-    data class SelfAssessment(var id: String?,val personId: String,var timestamp: Long?, val questions:Map<String,String>)
+    data class SelfAssessment(var id: String?,val personId: String,var timestamp: Long?, val questions:List<SelfAssessmentAnswer>)
 
     interface SelfAssessmentService {
         fun save(selfAssessmentQuestion: SelfAssessmentQuestion): Boolean
