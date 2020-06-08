@@ -61,7 +61,6 @@ class DefaultProximityHeatMapService(@Value("\${proximityEventsIndexName}") val 
     override fun count(realtimeCountCriteria: RealtimeCountCriteria): Flux<CountResponse> {
         val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm", Locale.ENGLISH)
         var dateTimeKey = dateTimeFormatter.format(Instant.ofEpochMilli(realtimeCountCriteria.timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime())
-        dateTimeKey="2020-06-04-12-39";
         val dateTimeKey2 = dateTimeFormatter.format(Instant.ofEpochMilli(realtimeCountCriteria.timestamp + 60000).atZone(ZoneId.systemDefault()).toLocalDateTime())
         val locationName = realtimeCountCriteria.canonicalLocationName.replace("\\p{Punct}|\\s", "")
 
