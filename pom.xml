@@ -16,6 +16,7 @@
         <module>proximity-events-ingest-service</module>
         <module>proximity-heatmap-service</module>
         <module>proximity-person-connections-service</module>
+		<module>proximity-person-details-service</module>
 
     </modules>
 
