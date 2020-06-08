@@ -41,20 +41,16 @@ class DefaultProximityPersonDetailsService(@Value("\${proximityPersonDetailsInde
         val index = "$es_prefix-$proximityPersonDetailsIndexName/$proximityPersonDetailsIndexName/${personDetails.id}"
         LOG.info(" In service:  $index")
 
-        try {
-            webClient.post()
-                    .uri(index)
-                    .header("Content-Type", "application/json")
-                    .accept(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(personDetails))
-                    .retrieve()
-                    .bodyToMono(Map::class.java)
-                    .subscribe {
-                        LOG.info(" Ingested to ES $it")
-                    }
-        }catch(e:Exception){
-            e.printStackTrace()
-        }
+        webClient.post()
+                .uri(index)
+                .header("Content-Type", "application/json")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(personDetails))
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .subscribe {
+                    LOG.info(" Ingested to ES $it")
+                }
         return true;
     }
 
