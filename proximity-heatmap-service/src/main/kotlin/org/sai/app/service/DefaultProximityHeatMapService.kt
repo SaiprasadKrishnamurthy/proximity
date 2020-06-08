@@ -60,7 +60,8 @@ class DefaultProximityHeatMapService(@Value("\${proximityEventsIndexName}") val 
 
     override fun count(realtimeCountCriteria: RealtimeCountCriteria): Flux<CountResponse> {
         val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm", Locale.ENGLISH)
-        val dateTimeKey = dateTimeFormatter.format(Instant.ofEpochMilli(realtimeCountCriteria.timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        var dateTimeKey = dateTimeFormatter.format(Instant.ofEpochMilli(realtimeCountCriteria.timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        dateTimeKey="2020-06-04-12-39";
         val dateTimeKey2 = dateTimeFormatter.format(Instant.ofEpochMilli(realtimeCountCriteria.timestamp + 60000).atZone(ZoneId.systemDefault()).toLocalDateTime())
         val locationName = realtimeCountCriteria.canonicalLocationName.replace("\\p{Punct}|\\s", "")
 
@@ -69,6 +70,7 @@ class DefaultProximityHeatMapService(@Value("\${proximityEventsIndexName}") val 
                 .flatMap {
                     val inKey = "$dateTimeKey:$locationName:$it:${ProximityType.In}"
                     val inKey2 = "${dateTimeKey2}:$locationName:$it:${ProximityType.In}"
+                    println("Keys : $inKey $inKey2")
                     val totalIn = redisCommands.pfCount(ByteBuffer.wrap(inKey.toByteArray(Charset.defaultCharset())))
                     val totalIn2 = redisCommands.pfCount(ByteBuffer.wrap(inKey2.toByteArray(Charset.defaultCharset())))
                     totalIn.concatWith(totalIn2).reduce { a, b -> a + b }
