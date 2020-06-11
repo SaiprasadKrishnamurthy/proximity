@@ -3,17 +3,32 @@
     "bool": {
       "must": [
         {
-          "range": {
-            "timestamp": {
-              "gte": "%s",
-              "lte": "%s"
-            }
+          "bool": {
+            "must": [
+              {
+                "range": {
+                  "timestamp": {
+                    "gte": "%s",
+                    "lte": "%s"
+                  }
+                }
+              },
+              {
+                "term": {
+                  "canonicalLocationName": {
+                    "value": "%s"
+                  }
+                }
+              }
+            ]
           }
         },
         {
-          "term": {
-            "canonicalLocationName": {
-              "value": "%s"
+          "bool": {
+            "must_not": {
+              "term": {
+                "userIdHash": "%s"
+              }
             }
           }
         }
@@ -21,7 +36,6 @@
     }
   },
   "_source": [
-    "userIdHash",
-    "timestamp"
+    "userIdHash"
   ]
 }

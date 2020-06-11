@@ -26,12 +26,14 @@ enum class ProximityType {
 }
 
 interface ProximityPersonConnectionsService {
-    suspend fun connectedPersons(userIdHash: String): List<ConnectedPersons>
+    fun connectedPersons(userIdHash: String): PersonConnections
 }
 
-data class ProximalPersons(val userIdHash: String,
-                           val timestamp: Long = System.currentTimeMillis())
+data class ProximalPersons(val userIdHash: String)
 
-data class ConnectedPersons(val userIdHash: String, val promixalPersons: Map<String, MutableList<ProximalPersons>?>)
+data class LocationDetails(val location:String ,
+                           val timestamp: Long = System.currentTimeMillis() )
 
+data class Connections(val source:Int, val target:Int, val properties: List<LocationDetails>)
 
+data class PersonConnections(val persons:List<ProximalPersons>, val connections: List<Connections>)

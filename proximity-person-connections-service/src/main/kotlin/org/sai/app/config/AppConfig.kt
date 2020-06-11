@@ -1,64 +1,133 @@
 package org.sai.app.config
 
-import io.netty.handler.ssl.SslContextBuilder
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import kotlinx.coroutines.newFixedThreadPoolContext
+import com.google.common.base.Predicates
+import org.apache.commons.codec.binary.Base64
+import org.apache.http.HttpHost
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.ssl.SSLContextBuilder
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.server.ServerWebExchange
-import reactor.netty.http.client.HttpClient
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.http.client.ClientHttpRequestFactory
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
+import org.springframework.http.converter.StringHttpMessageConverter
+import org.springframework.web.client.RestTemplate
 import springfox.documentation.builders.ApiInfoBuilder
 import springfox.documentation.builders.PathSelectors
 import springfox.documentation.builders.RequestHandlerSelectors
+import springfox.documentation.service.ApiInfo
 import springfox.documentation.service.Contact
 import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
-import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux
-
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.nio.charset.Charset
+import java.security.KeyStore
 
 /**
  * @author Sai.
  */
 @Configuration
-@EnableSwagger2WebFlux
 class AppConfig {
 
-    @Bean("PROXIMITY_EVENTS_INGEST")
-    fun proximityEventsIngest() = newFixedThreadPoolContext(Runtime.getRuntime().availableProcessors() * 2, "PROXIMITY_EVENTS_INGEST")
+    @Bean("esRestTemplate")
+    fun esRestTemplate(@Value("\${es.username}") esUserName: String,
+                       @Value("\${es.password}") esPassword: String,
+                       @Value("\${es.url}") esUrl: String,
+                       @Value("\${esJksFile}") esJksFile: String,
+                       @Value("\${esJksPassword}") esJksPassword: String,
+                       @Value("\${useProxy}") useProxy: Boolean): RestTemplate {
+        return try {
+            if (!esUrl.contains("https")) {
+                val stringHttpMessageConverter = StringHttpMessageConverter()
+                stringHttpMessageConverter.defaultCharset = Charset.defaultCharset()
+                val restTemplate = RestTemplate()
+                restTemplate.messageConverters.add(stringHttpMessageConverter)
+                return restTemplate
+            }
+            var keystoreFile: InputStream? = null
+            try {
+                val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+                if (File(esJksFile).exists()) {
+                    keystoreFile = FileInputStream(esJksFile)
+                } else {
+                    keystoreFile = this::class.java.getResourceAsStream(esJksFile)
+                }
+                keyStore.load(keystoreFile, esJksPassword.toCharArray())
+                val socketFactory = SSLConnectionSocketFactory(
+                        SSLContextBuilder()
+                                .loadTrustMaterial(null, TrustSelfSignedStrategy())
+                                .loadKeyMaterial(keyStore, null) // Can be null as the key is already loaded using the password.
+                                .build(),
+                        NoopHostnameVerifier.INSTANCE)
+                val httpClientBuilder: HttpClientBuilder = HttpClients
+                        .custom()
+                if (useProxy) {
+                    // ok - hardcoded!
+                    httpClientBuilder.setProxy(HttpHost("192.168.46.100", 3128, "http"))
+                }
+                httpClientBuilder.setSSLSocketFactory(socketFactory).build()
+                val requestFactory: ClientHttpRequestFactory = HttpComponentsClientHttpRequestFactory(httpClientBuilder.build())
+                RestTemplate(requestFactory)
+            } finally {
+                if (keystoreFile != null) {
+                    try {
+                        keystoreFile.close()
+                    } catch (ignore: IOException) {
+                        // ignored.
+                    }
+                }
+            }
+        } catch (ex: Exception) {
+            throw RuntimeException(ex)
+        }
+    }
 
-    @Bean("PROXIMITY_EVENTS_COUNTER_INGEST")
-    fun proximityEventsCounterIngest() = newFixedThreadPoolContext(Runtime.getRuntime().availableProcessors() * 2, "PROXIMITY_EVENTS_COUNTER_INGEST")
-
-    @ConditionalOnProperty(value = ["elasticsearch.self.signed.certificate"], havingValue = "true", matchIfMissing = true)
+    /**
+     * Necessary HTTP headers for the Datalake.
+     *
+     * @return HttpHeaders.
+     */
+    @Qualifier("esAuthHeaders")
     @Bean
-    fun webclient(@Value("\${es.username}") esUserName: String,
-                  @Value("\${es.password}") esPassword: String,
-                  @Value("\${es.url}") esUrl: String): WebClient {
-        val sslContext = SslContextBuilder
-                .forClient()
-                .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                .build()
-        val httpClient = HttpClient.create().secure { t -> t.sslContext(sslContext) }
-        val httpConnector = ReactorClientHttpConnector(httpClient)
-        return WebClient.builder()
-                .clientConnector(httpConnector)
-                .defaultHeaders { header -> header.setBasicAuth(esUserName, esPassword) }
-                .baseUrl(esUrl)
-                .build()
+    fun esAuthHeaders(@Value("\${es.username}") esUserName: String,
+                      @Value("\${es.password}") esPassword: String): HttpHeaders? {
+        return object : HttpHeaders() {
+            init {
+                val auth = "$esUserName:$esPassword"
+                val encodedAuth = Base64.encodeBase64(auth.toByteArray(Charset.defaultCharset()))
+                val authHeader = "Basic " + String(encodedAuth)
+                set("Authorization", authHeader)
+                contentType = MediaType.APPLICATION_JSON
+            }
+        }
     }
 
     @Bean
-    fun api(): Docket {
+    fun configApi(): Docket {
         return Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(ApiInfoBuilder().description("Proximity Events Ingest Service").contact(Contact("Sai", "", "saikris@gmail.com")).build())
-                .ignoredParameterTypes(ServerWebExchange::class.java)
+                .groupName("config")
+                .apiInfo(apiInfo())
                 .select()
                 .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
+                .paths(Predicates.not(PathSelectors.regex("/error"))) // Exclude Spring error controllers
+                .build()
+    }
+
+    private fun apiInfo(): ApiInfo {
+        return ApiInfoBuilder()
+                .title("Proximity person connection service")
+                .contact(Contact("SITA GSL Innovation Team", "www.sita.aero", "saiprasad.krishnamurthy@sita.aero,pankaj.jain2@sita.aero"))
+                .version("Build: " + "1.0")
                 .build()
     }
 }

@@ -2,10 +2,10 @@ package org.sai.app
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.springframework.kotlin.coroutine.EnableCoroutine
+import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @SpringBootApplication
-@EnableCoroutine
+@EnableSwagger2
 class ProximityPersonConnectionsServiceApplication
 
 fun main(args: Array<String>) {
