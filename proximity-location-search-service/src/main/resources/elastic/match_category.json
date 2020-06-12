@@ -1,0 +1,19 @@
+{
+  "sort": [
+    {
+      "_geo_distance": {
+        "geoLocation": "%s",
+        "order": "%s"
+      }
+    }
+  ],
+  "query": {
+    "bool" : {
+      "filter": {
+        "term": {
+          "category": "%s"
+        }
+      }
+    }
+  }
+}

@@ -17,6 +17,7 @@
         <module>proximity-heatmap-service</module>
         <module>proximity-person-connections-service</module>
 		<module>proximity-person-details-service</module>
+        <module>proximity-location-search-service</module>
 
     </modules>
 
