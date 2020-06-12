@@ -103,10 +103,10 @@ class DefaultLocationSearchService(@Value("\${proximityLocationDetailsIndexName}
                 .header("Content-Type", "application/json")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(Map::class.java)
-                 /*.subscribe{
-                     LOG.info(" HeatMap $it")
-                 }*/
+                .bodyToMono(List::class.java)
+                 .subscribe{
+                     println(it[0])
+                 }
         println(heatMapresponse)
         return ""
     }
