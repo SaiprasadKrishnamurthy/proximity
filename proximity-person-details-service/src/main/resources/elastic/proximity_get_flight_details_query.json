@@ -1,0 +1,19 @@
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "pnr":  "%s"
+          }
+        },
+        {
+          "match": {
+            "passengers": "%s"
+          }
+        }
+      ]
+    }
+  }
+
+}

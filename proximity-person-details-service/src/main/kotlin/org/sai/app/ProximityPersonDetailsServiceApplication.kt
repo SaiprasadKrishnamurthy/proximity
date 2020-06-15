@@ -6,8 +6,8 @@ import org.springframework.kotlin.coroutine.EnableCoroutine
 
 @SpringBootApplication
 @EnableCoroutine
-class ProximityHeatmapServiceApplication
+class ProximityPersonDetailsServiceApplication
 
 fun main(args: Array<String>) {
-    runApplication<ProximityHeatmapServiceApplication>(*args)
+    runApplication<ProximityPersonDetailsServiceApplication>(*args)
 }

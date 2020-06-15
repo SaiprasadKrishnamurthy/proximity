@@ -16,11 +16,27 @@ data class PersonDetails(var id: String?,val firstName: String?,val lastName: St
     data class SelfAssessmentQuestion(var id: String?,val question: String,val options: List<String>,val mandatory: Boolean=true)
     data class SelfAssessment(var id: String?,val personId: String,var timestamp: Long?, val answers:List<SelfAssessmentAnswer>)
 
+    data class FlightDetails(val departureTime:String="19:25",
+                             val arrivalTime:String="08:20",
+                             val travelTime:String="8hrs 25 mins",
+                             val aircraft:String="British Airways",
+                             val carrier:String="Boeing 777-200",
+                             val passengers:String="Kumar Thangavel",
+                             val seat:String="16A",
+                             val flightNo: String="BA 257",
+                             val gate:String="B32",
+                             val pnr:String="AAA123"
+    )
+
     interface SelfAssessmentService {
         fun save(selfAssessmentQuestion: SelfAssessmentQuestion): Boolean
         fun findAll(): Mono<List<SelfAssessmentQuestion>>
         fun selfAccess(selfAssessment: SelfAssessment): Boolean
     }
+
+interface ProximityFlightDetailsService{
+    fun flightDetails(pnr: String, lastName: String):Mono<FlightDetails>
+}
 
 
 
